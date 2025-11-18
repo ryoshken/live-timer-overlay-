@@ -5,6 +5,8 @@ const initTimers = (params.get('timers') || '').split('|').filter(Boolean);
 const singleIdx = parseInt(params.get('timer'), 10);
 const isSingle = !isNaN(singleIdx) && singleIdx >= 1 && singleIdx <= 3;
 const singleMinutesParam = params.get('minutes');
+const autostart = params.get('autostart') === '1' || params.get('auto') === '1' || params.get('start') === '1';
+const room = params.get('room') || 'default';
 const sizeParam = params.get('size');
 const transparentParam = params.get('transparent') === '1';
 
@@ -15,6 +17,7 @@ if (overlay && (typeof singleIdx === 'number') && !isNaN(singleIdx)) document.bo
 const sizeInput = document.querySelector('#size');
 const transparentChk = document.querySelector('#transparent');
 const timersEl = document.querySelector('#timers');
+const linksEl = document.querySelector('#links');
 
 if (sizeParam) {
   document.documentElement.style.setProperty('--digit-size', `${parseInt(sizeParam,10)}px`);
@@ -29,7 +32,7 @@ function format(total) {
   return `${pad(mm)}:${pad(ss)}`;
 }
 
-function addTimer(presetMinutes) {
+function addTimer(presetMinutes, idx) {
   const wrap = document.createElement('div');
   wrap.className = 'timer';
   const display = document.createElement('div');
@@ -82,59 +85,24 @@ function addTimer(presetMinutes) {
   timersEl.appendChild(wrap);
 
   let remainingMs = 0;
-  let running = false;
-  let t0 = 0;
-  let intervalId = 0;
 
   function render(ms) {
     const sec = Math.max(0, Math.ceil(ms/1000));
     display.textContent = format(sec);
   }
-  function stopTick() {
-    running = false;
-    pauseBtn.disabled = true;
-    startBtn.disabled = false;
-    if (intervalId) { clearInterval(intervalId); intervalId = 0; }
+  function send(type, minutes) {
+    fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ room, timer: idx, type, minutes }) });
   }
   function start() {
-    if (remainingMs <= 0) {
-      const m = parseInt(setInput.value,10);
-      if (!isNaN(m) && m > 0) remainingMs = m*60*1000;
-      else return;
-    }
-    running = true;
-    startBtn.disabled = true;
-    pauseBtn.disabled = false;
-    t0 = performance.now();
-    intervalId = setInterval(() => {
-      const now = performance.now();
-      const dt = now - t0;
-      t0 = now;
-      remainingMs -= dt;
-      if (remainingMs <= 0) {
-        remainingMs = 0;
-        render(0);
-        display.classList.add('done');
-        stopTick();
-      } else {
-        render(remainingMs);
-      }
-    }, 200);
-  }
-  function pause() { stopTick(); }
-  function reset() {
-    stopTick();
     const m = parseInt(setInput.value,10);
-    remainingMs = !isNaN(m) ? Math.max(0, m)*60*1000 : 0;
-    display.classList.remove('done');
-    render(remainingMs);
+    send('start', !isNaN(m) ? m : undefined);
   }
-  function addMinutes(m) {
-    if (isNaN(m) || m <= 0) return;
-    remainingMs += m*60*1000;
-    display.classList.remove('done');
-    render(remainingMs);
+  function pause() { send('pause'); }
+  function reset() {
+    const m = parseInt(setInput.value,10);
+    send('reset', !isNaN(m) ? m : 0);
   }
+  function addMinutes(m) { if (!isNaN(m) && m > 0) send('add', m); }
 
   startBtn.addEventListener('click', start);
   pauseBtn.addEventListener('click', pause);
@@ -148,15 +116,20 @@ function addTimer(presetMinutes) {
   });
   setBtnM.addEventListener('click', reset);
 
-  if (typeof presetMinutes === 'number' && presetMinutes > 0) {
-    remainingMs = presetMinutes*60*1000;
-    setInput.value = String(presetMinutes);
-    render(remainingMs);
-  } else {
-    render(0);
-  }
+  if (typeof presetMinutes === 'number' && presetMinutes > 0) { setInput.value = String(presetMinutes); }
+  render(0);
 
   if (overlay && !overlayControls) panel.style.display = 'none';
+  const es = new EventSource(`/sse?room=${encodeURIComponent(room)}`);
+  es.onmessage = e => {
+    const data = JSON.parse(e.data);
+    const t = data.timers[idx];
+    remainingMs = t.remainingMs;
+    render(remainingMs);
+    startBtn.disabled = t.running;
+    pauseBtn.disabled = !t.running;
+  };
+  if (overlay && isSingle && autostart && (typeof presetMinutes === 'number') && presetMinutes > 0) start();
 }
 
 if (sizeInput) sizeInput.addEventListener('input', e => {
@@ -177,15 +150,62 @@ if (isSingle) {
     const m = parseInt(v ?? '', 10);
     preset = !isNaN(m) ? m : undefined;
   }
-  addTimer(preset);
+  addTimer(preset, singleIdx);
 } else {
   if (initTimers.length) {
     for (let i = 0; i < COUNT; i++) {
       const v = initTimers[i];
       const m = parseInt(v ?? '', 10);
-      addTimer(!isNaN(m) ? m : undefined);
+      addTimer(!isNaN(m) ? m : undefined, i+1);
     }
   } else {
-    for (let i = 0; i < COUNT; i++) addTimer();
+    for (let i = 0; i < COUNT; i++) addTimer(undefined, i+1);
   }
 }
+
+function buildLink(idx) {
+  const base = location.origin.replace(/\/$/,'');
+  const size = sizeInput ? parseInt(sizeInput.value,10) : (sizeParam ? parseInt(sizeParam,10) : 120);
+  const q = new URLSearchParams();
+  q.set('overlay','1');
+  q.set('transparent','1');
+  q.set('timer', String(idx));
+  q.set('room', room);
+  q.set('size', String(size));
+  return `${base}/timer/?${q.toString()}`;
+}
+
+function renderLinks() {
+  if (!linksEl) return;
+  linksEl.innerHTML = '';
+  for (let i = 1; i <= 3; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'timer';
+    const display = document.createElement('div');
+    display.className = 'display';
+    display.textContent = '00:00';
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    const row = document.createElement('div');
+    row.className = 'row';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = buildLink(i);
+    input.style.width = '520px';
+    const copy = document.createElement('button');
+    copy.className = 'primary';
+    copy.textContent = 'Copy URL';
+    const test = document.createElement('button');
+    test.className = 'ghost';
+    test.textContent = 'Test';
+    copy.addEventListener('click', () => { navigator.clipboard.writeText(input.value); copy.textContent = 'Copied'; setTimeout(() => copy.textContent = 'Copy URL', 1200); });
+    test.addEventListener('click', () => { window.open(input.value, '_blank'); });
+    row.append(input, copy, test);
+    panel.append(row);
+    wrap.append(display, panel);
+    linksEl.appendChild(wrap);
+  }
+}
+
+renderLinks();
+if (sizeInput) sizeInput.addEventListener('input', renderLinks);

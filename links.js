@@ -5,6 +5,9 @@ function build(base, idx, opts) {
   if (opts.transparent) q.set('transparent','1');
   if (opts.controls) q.set('overlay_controls','1');
   q.set('size', String(opts.size));
+  if (opts.autostart) q.set('autostart','1');
+  if (opts.minutes && opts.minutes > 0) q.set('minutes', String(opts.minutes));
+  if (opts.room) q.set('room', String(opts.room));
   return `${base.replace(/\/$/,'')}/timer/?${q.toString()}`;
 }
 
@@ -12,7 +15,10 @@ const el = {
   links: document.querySelector('#links'),
   optTransparent: document.querySelector('#optTransparent'),
   optControls: document.querySelector('#optControls'),
-  optSize: document.querySelector('#optSize')
+  optSize: document.querySelector('#optSize'),
+  optAutostart: document.querySelector('#optAutostart'),
+  optMinutes: document.querySelector('#optMinutes'),
+  optRoom: document.querySelector('#optRoom')
 };
 
 function row(title, url) {
@@ -59,7 +65,10 @@ function render() {
   const opts = {
     transparent: el.optTransparent.checked,
     controls: el.optControls.checked,
-    size: parseInt(el.optSize.value,10)
+    size: parseInt(el.optSize.value,10),
+    autostart: el.optAutostart.checked,
+    minutes: parseInt(el.optMinutes.value,10),
+    room: el.optRoom.value.trim() || 'default'
   };
   el.links.innerHTML = '';
   for (let i = 1; i <= 3; i++) {
