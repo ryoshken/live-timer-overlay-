@@ -23,6 +23,7 @@ button:disabled { opacity:0.6; cursor: not-allowed; }
 .overlay .display { background: transparent; }
 body.transparent { background: transparent; }
 .transparent .display { background: transparent; text-shadow: 0 2px 0 rgba(0,0,0,0.35); }
+.overlay .display { text-shadow: none; }
 .overlay.single .timer { background: transparent; border: 0; padding: 0; }
 .overlay.single .display { background: transparent; }
 .display.done { animation: blink 0.8s steps(2, start) 6; }
