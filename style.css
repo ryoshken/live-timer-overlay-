@@ -18,6 +18,8 @@ button.ghost { background: #151515; }
 button:disabled { opacity:0.6; cursor: not-allowed; }
 .overlay #toolbar { display:none; }
 .overlay .panel { display:none; }
+.overlay .timer { background: transparent; border: 0; padding: 0; }
+.overlay .display { background: transparent; }
 body.transparent { background: transparent; }
 .transparent .display { background: transparent; text-shadow: 0 2px 0 rgba(0,0,0,0.35); }
 .overlay.single .timer { background: transparent; border: 0; padding: 0; }
