@@ -17,7 +17,6 @@ if (overlay && (typeof singleIdx === 'number') && !isNaN(singleIdx)) document.bo
 const sizeInput = document.querySelector('#size');
 const transparentChk = document.querySelector('#transparent');
 const timersEl = document.querySelector('#timers');
-const linksEl = document.querySelector('#links');
 
 if (sizeParam) {
   document.documentElement.style.setProperty('--digit-size', `${parseInt(sizeParam,10)}px`);
@@ -32,6 +31,26 @@ function format(total) {
   return `${pad(mm)}:${pad(ss)}`;
 }
 
+const linkInputs = {};
+
+function buildLink(idx) {
+  const base = location.origin.replace(/\/$/,'');
+  const size = sizeInput ? parseInt(sizeInput.value,10) : (sizeParam ? parseInt(sizeParam,10) : 120);
+  const q = new URLSearchParams();
+  q.set('overlay','1');
+  q.set('transparent','1');
+  q.set('timer', String(idx));
+  q.set('room', room);
+  q.set('size', String(size));
+  return `${base}/timer/?${q.toString()}`;
+}
+
+function updateAllLinks() {
+  for (let i = 1; i <= 3; i++) {
+    if (linkInputs[i]) linkInputs[i].value = buildLink(i);
+  }
+}
+
 function addTimer(presetMinutes, idx) {
   const wrap = document.createElement('div');
   wrap.className = 'timer';
@@ -40,6 +59,23 @@ function addTimer(presetMinutes, idx) {
   display.textContent = '00:00';
   const panel = document.createElement('div');
   panel.className = 'panel';
+  const rowLink = document.createElement('div');
+  rowLink.className = 'row';
+  const linkInput = document.createElement('input');
+  linkInput.type = 'text';
+  linkInput.className = 'link';
+  linkInput.value = buildLink(idx);
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'primary';
+  copyBtn.textContent = 'Copy URL';
+  const testBtn = document.createElement('button');
+  testBtn.className = 'ghost';
+  testBtn.textContent = 'Test';
+  copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(linkInput.value); copyBtn.textContent = 'Copied'; setTimeout(() => copyBtn.textContent = 'Copy URL', 1200); });
+  testBtn.addEventListener('click', () => { window.open(linkInput.value, '_blank'); });
+  rowLink.append(linkInput, copyBtn, testBtn);
+  linkInputs[idx] = linkInput;
+
   const row1 = document.createElement('div');
   row1.className = 'row';
   const startBtn = document.createElement('button');
@@ -80,7 +116,7 @@ function addTimer(presetMinutes, idx) {
   const setBtnM = document.createElement('button');
   setBtnM.textContent = 'Set';
   row2.append(quick1, quick5, quick10, addInput, addBtnM, setInput, setBtnM);
-  panel.append(row1, row2);
+  panel.append(rowLink, row1, row2);
   wrap.append(display, panel);
   timersEl.appendChild(wrap);
 
@@ -134,9 +170,11 @@ function addTimer(presetMinutes, idx) {
 
 if (sizeInput) sizeInput.addEventListener('input', e => {
   document.documentElement.style.setProperty('--digit-size', `${e.target.value}px`);
+  updateAllLinks();
 });
 if (transparentChk) transparentChk.addEventListener('change', e => {
   document.body.classList.toggle('transparent', e.target.checked);
+  updateAllLinks();
 });
 
 const COUNT = 3;

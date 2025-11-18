@@ -8,6 +8,7 @@ body { margin:0; background: var(--bg); color: var(--fg); font-family: Koulen, s
 .display { font-family: Koulen, sans-serif; font-size: var(--digit-size); line-height:1; color: var(--fg); background: rgba(0,0,0,0.6); padding: 8px 14px; border-radius: 10px; letter-spacing: 2px; min-width: 240px; text-align: center; }
 .panel { display:flex; flex-direction: column; gap:10px; }
 .row { display:flex; flex-wrap: wrap; gap:8px; align-items:center; }
+input.link { width: 520px; }
 input[type=number], input[type=text] { padding:8px 10px; border-radius:8px; border:1px solid #333; background:#0e0e0e; color:#fff; font-family: system-ui, sans-serif; }
 label.inline { font-family: system-ui, sans-serif; color:#ddd; }
 button { padding: 8px 12px; border-radius:8px; border:1px solid #444; background:#1f1f1f; color:#fff; cursor: pointer; font-weight:600; }
