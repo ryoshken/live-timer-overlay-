@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/timer", "destination": "/index.html" },
+    { "source": "/timer/", "destination": "/index.html" }
+  ]
+}

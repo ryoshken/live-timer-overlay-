@@ -1,0 +1,26 @@
+:root { --digit-size: 96px; --bg: #121212; --fg: #ffffff; --accent: #3b82f6; --accent2: #10b981; --muted: #1f2937; }
+* { box-sizing: border-box; }
+body { margin:0; background: var(--bg); color: var(--fg); font-family: Koulen, sans-serif; }
+#app { padding: 20px; max-width: 1024px; margin: 0 auto; }
+#toolbar { display:flex; flex-wrap: wrap; gap:12px; align-items:center; margin-bottom:20px; font-family: system-ui, sans-serif; }
+#timers { display:flex; flex-direction: column; gap: 14px; }
+.timer { display:grid; grid-template-columns: auto 1fr; gap:14px; align-items:center; background: #0b0b0b; border: 1px solid #222; border-radius: 12px; padding: 12px; }
+.display { font-family: Koulen, sans-serif; font-size: var(--digit-size); line-height:1; color: var(--fg); background: rgba(0,0,0,0.6); padding: 8px 14px; border-radius: 10px; letter-spacing: 2px; min-width: 240px; text-align: center; }
+.panel { display:flex; flex-direction: column; gap:10px; }
+.row { display:flex; flex-wrap: wrap; gap:8px; align-items:center; }
+input[type=number], input[type=text] { padding:8px 10px; border-radius:8px; border:1px solid #333; background:#0e0e0e; color:#fff; font-family: system-ui, sans-serif; }
+label.inline { font-family: system-ui, sans-serif; color:#ddd; }
+button { padding: 8px 12px; border-radius:8px; border:1px solid #444; background:#1f1f1f; color:#fff; cursor: pointer; font-weight:600; }
+button:hover { background:#262626; }
+button.primary { background: var(--accent); border-color: var(--accent); }
+button.green { background: var(--accent2); border-color: var(--accent2); }
+button.ghost { background: #151515; }
+button:disabled { opacity:0.6; cursor: not-allowed; }
+.overlay #toolbar { display:none; }
+.overlay .panel { display:none; }
+body.transparent { background: transparent; }
+.transparent .display { background: transparent; text-shadow: 0 2px 0 rgba(0,0,0,0.35); }
+.overlay.single .timer { background: transparent; border: 0; padding: 0; }
+.overlay.single .display { background: transparent; }
+.display.done { animation: blink 0.8s steps(2, start) 6; }
+@keyframes blink { 50% { opacity: 0.2; } }
